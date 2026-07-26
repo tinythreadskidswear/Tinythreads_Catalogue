@@ -55,8 +55,16 @@
     return state;
   }
 
-  function hasActiveFilters(state) {
-    return state.subcategories.length > 0 || state.ages.length > 0 || state.priceMin !== PRICE_MIN || state.priceMax !== PRICE_MAX;
+  function priceMinFor(ctx) {
+    return Number.isFinite(ctx.priceMin) ? ctx.priceMin : PRICE_MIN;
+  }
+
+  function priceMaxFor(ctx) {
+    return Number.isFinite(ctx.priceMax) ? ctx.priceMax : PRICE_MAX;
+  }
+
+  function hasActiveFilters(state, ctx) {
+    return state.subcategories.length > 0 || state.ages.length > 0 || state.priceMin !== priceMinFor(ctx) || state.priceMax !== priceMaxFor(ctx);
   }
 
   function ensureOverlay() {
@@ -117,6 +125,8 @@
 
   function renderFilterTray(ctx, subcategories, ages) {
     const state = ensureState(ctx.state);
+    const priceMin = priceMinFor(ctx);
+    const priceMax = priceMaxFor(ctx);
     return [
       '<aside class="tt-tray tt-tray-left" id="tt-filter-tray-' + ctx.cat + '" aria-hidden="true">',
       '<div class="tt-tray-head"><h3 class="tt-tray-title">Filter</h3><button class="tt-tray-close" type="button" data-close-tray aria-label="Close filter">x</button></div>',
@@ -124,8 +134,8 @@
       '<section class="tt-filter-section tt-filter-price-section"><h4 class="tt-filter-heading">Price Range</h4>',
       '<div class="tt-price-values"><span id="tt-price-min-' + ctx.cat + '">Rs ' + state.priceMin + '</span><span id="tt-price-max-' + ctx.cat + '">Rs ' + state.priceMax + '</span></div>',
       '<div class="tt-range-stack">',
-      '<label class="tt-range-row"><span>Min</span><input type="range" min="' + PRICE_MIN + '" max="' + PRICE_MAX + '" step="50" value="' + state.priceMin + '" data-price-min></label>',
-      '<label class="tt-range-row"><span>Max</span><input type="range" min="' + PRICE_MIN + '" max="' + PRICE_MAX + '" step="50" value="' + state.priceMax + '" data-price-max></label>',
+      '<label class="tt-range-row"><span>Min</span><input type="range" min="' + priceMin + '" max="' + priceMax + '" step="50" value="' + state.priceMin + '" data-price-min></label>',
+      '<label class="tt-range-row"><span>Max</span><input type="range" min="' + priceMin + '" max="' + priceMax + '" step="50" value="' + state.priceMax + '" data-price-max></label>',
       '</div></section>',
       '<div class="tt-filter-split">',
       '<div class="tt-filter-nav" role="tablist" aria-label="Filter groups">',
@@ -181,7 +191,7 @@
     const state = ensureState(ctx.state);
     const filterButton = bar.querySelector('[data-open-filter]');
     const sortButton = bar.querySelector('[data-open-sort]');
-    if (filterButton) filterButton.classList.toggle('has-active', hasActiveFilters(state));
+    if (filterButton) filterButton.classList.toggle('has-active', hasActiveFilters(state, ctx));
     if (sortButton) sortButton.classList.toggle('has-active', state.sort !== 'default');
   }
 
@@ -207,14 +217,16 @@
     });
     tray.querySelector('[data-clear-filters]').addEventListener('click', function () {
       const state = ensureState(ctx.state);
+      const priceMin = priceMinFor(ctx);
+      const priceMax = priceMaxFor(ctx);
       state.subcategories = [];
       state.ages = [];
-      state.priceMin = PRICE_MIN;
-      state.priceMax = PRICE_MAX;
+      state.priceMin = priceMin;
+      state.priceMax = priceMax;
       ctx.state.filter = 'all';
       tray.querySelectorAll('input[type="checkbox"]').forEach(function (input) { input.checked = false; });
-      tray.querySelector('[data-price-min]').value = PRICE_MIN;
-      tray.querySelector('[data-price-max]').value = PRICE_MAX;
+      tray.querySelector('[data-price-min]').value = priceMin;
+      tray.querySelector('[data-price-max]').value = priceMax;
       updatePriceLabels(ctx.cat, tray);
       ctx.onApply(ctx.cat);
       syncBarState(ctx);

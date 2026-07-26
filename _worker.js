@@ -261,7 +261,8 @@ function buildHTML(product) {
 // ── Category page slugs (for direct URLs like /boys, /girls, etc.) ────────
 const CATEGORY_SLUGS = [
   'boys', 'girls', 'babies', 'nightwear', 'footwear', 'accessories',
-  'toys', 'twinning', 'kidscare', 'school', 'learning', 'celebration',
+  'toys', 'twinning', 'kidscare', 'school', 'learning', 'clearnace',
+  'clearance', 'celebration',
 ];
 
 // ── Main Worker handler ────────────────────────────────────────────────────

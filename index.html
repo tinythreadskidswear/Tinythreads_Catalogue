@@ -946,7 +946,7 @@
       <button type="button" class="tt-image-card" onclick="ttOpenCollection('daily_wear')">
         <img src="./assets/home-revive/mockup/offer-3-for-999.png" alt="Mix Match Save Big offer" loading="lazy">
       </button>
-      <button type="button" class="tt-image-card" onclick="ttOpenCollection('clearance')">
+      <button type="button" class="tt-image-card" onclick="showPage('clearance')">
         <img src="./assets/home-revive/mockup/offer-clearance-299.png" alt="Stock clearance from Rs 299" loading="lazy">
       </button>
       <button type="button" class="tt-image-card" onclick="ttHomeTrialCTA()">
@@ -1837,6 +1837,81 @@
           <div class="spinner"></div>Loading...
         </div>
       </div>
+    </div>
+  </div>
+
+  <div id="page-clearance" class="page">
+    <div class="clearance-hero">
+      <div class="breadcrumb"><a href="#" onclick="showPage('home');return false;">Home</a><span>&rsaquo;</span> Clearance</div>
+      <div class="clearance-hero-inner">
+        <span class="clearance-kicker">Limited stock</span>
+        <h1>Clearance</h1>
+        <p>Budget-friendly Tinythreads picks grouped by price. Add favourites and checkout via WhatsApp.</p>
+      </div>
+    </div>
+    <div class="sticky-subnav clearance-subnav">
+      <div class="filter-bar" id="filter-bar-clearance">
+        <div class="filter-bar-inner">
+          <div class="fb-row"><span class="filter-label">Filter</span>
+            <div class="filter-scroll-wrap">
+              <div class="filter-scroll" id="filter-scroll-clearance"><button class="filter-btn active"
+                  onclick="filterProducts('clearance','all',this)" data-all="1">All</button></div>
+            </div>
+          </div>
+          <div class="fb-row fb-sort-row"><span class="filter-label">Sort</span>
+            <div class="sort-chip-row" id="sort-chips-clearance"><button class="sort-chip sort-chip-active"
+                onclick="applySort('clearance','default',this)">Featured</button><button class="sort-chip"
+                onclick="applySort('clearance','price-asc',this)">Price: Low to High</button><button class="sort-chip"
+                onclick="applySort('clearance','price-desc',this)">Price: High to Low</button><button class="sort-chip"
+                onclick="applySort('clearance','new',this)">New Arrivals</button><button class="sort-chip"
+                onclick="applySort('clearance','az',this)">Name A-Z</button></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="clearance-price-nav" aria-label="Clearance price sections">
+      <button type="button" onclick="ttClearanceScrollTo(99)">Rs 99</button>
+      <button type="button" onclick="ttClearanceScrollTo(149)">Rs 149</button>
+      <button type="button" onclick="ttClearanceScrollTo(199)">Rs 199</button>
+      <button type="button" onclick="ttClearanceScrollTo(249)">Rs 249</button>
+      <button type="button" onclick="ttClearanceScrollTo(299)">Rs 299</button>
+    </div>
+    <div class="section clearance-section">
+      <section class="clearance-price-block" id="clearance-99">
+        <div class="clearance-block-head">
+          <h2>Rs 99</h2>
+          <span id="clearance-count-99">0 items</span>
+        </div>
+        <div class="prod-grid clearance-grid" id="clearance-grid-99"><div class="loading-grid"><div class="spinner"></div>Loading...</div></div>
+      </section>
+      <section class="clearance-price-block" id="clearance-149">
+        <div class="clearance-block-head">
+          <h2>Rs 149</h2>
+          <span id="clearance-count-149">0 items</span>
+        </div>
+        <div class="prod-grid clearance-grid" id="clearance-grid-149"><div class="loading-grid"><div class="spinner"></div>Loading...</div></div>
+      </section>
+      <section class="clearance-price-block" id="clearance-199">
+        <div class="clearance-block-head">
+          <h2>Rs 199</h2>
+          <span id="clearance-count-199">0 items</span>
+        </div>
+        <div class="prod-grid clearance-grid" id="clearance-grid-199"><div class="loading-grid"><div class="spinner"></div>Loading...</div></div>
+      </section>
+      <section class="clearance-price-block" id="clearance-249">
+        <div class="clearance-block-head">
+          <h2>Rs 249</h2>
+          <span id="clearance-count-249">0 items</span>
+        </div>
+        <div class="prod-grid clearance-grid" id="clearance-grid-249"><div class="loading-grid"><div class="spinner"></div>Loading...</div></div>
+      </section>
+      <section class="clearance-price-block" id="clearance-299">
+        <div class="clearance-block-head">
+          <h2>Rs 299</h2>
+          <span id="clearance-count-299">0 items</span>
+        </div>
+        <div class="prod-grid clearance-grid" id="clearance-grid-299"><div class="loading-grid"><div class="spinner"></div>Loading...</div></div>
+      </section>
     </div>
   </div>
 
