@@ -10,6 +10,7 @@
 #page-kidscare,
 #page-school,
 #page-learning,
+#page-clearance,
 #page-celebration {
   /* Both axes must be clipped (not just x). Setting overflow-x alone
      leaves overflow-y unset, and per spec the browser then computes
@@ -33,6 +34,7 @@
   #page-kidscare,
   #page-school,
   #page-learning,
+  #page-clearance,
   #page-celebration {
     overflow: visible;
   }
