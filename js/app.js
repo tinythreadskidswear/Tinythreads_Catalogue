@@ -673,8 +673,36 @@
       });
     }
 
+    let clearanceStickyObserver = null;
+
+    function syncClearanceStickyOffset() {
+      if (!document.documentElement.classList.contains('tt-clearance-snap')) return;
+      const sticky = document.querySelector('#page-clearance .clearance-subnav');
+      if (!sticky) return;
+      const stickyTop = parseFloat(window.getComputedStyle(sticky).top) || 0;
+      const contentOffset = Math.ceil(stickyTop + sticky.getBoundingClientRect().height);
+      document.documentElement.style.setProperty('--clearance-content-offset', contentOffset + 'px');
+    }
+
+    function watchClearanceStickyOffset() {
+      const sticky = document.querySelector('#page-clearance .clearance-subnav');
+      if (!sticky) return;
+      if (!clearanceStickyObserver && 'ResizeObserver' in window) {
+        clearanceStickyObserver = new ResizeObserver(syncClearanceStickyOffset);
+        clearanceStickyObserver.observe(sticky);
+      }
+      syncClearanceStickyOffset();
+    }
+
+    window.addEventListener('resize', syncClearanceStickyOffset, { passive: true });
+
     function ttClearanceScrollTo(price) {
-      showPage('clearance');
+      const clearancePage = document.getElementById('page-clearance');
+      if (!clearancePage || !clearancePage.classList.contains('active')) {
+        showPage('clearance');
+      } else {
+        syncClearanceStickyOffset();
+      }
       requestAnimationFrame(function () {
         const target = document.getElementById('clearance-' + price);
         if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1161,6 +1189,7 @@
     if (!pageEl) return;
     pageEl.classList.add('active');
     document.documentElement.classList.toggle('tt-clearance-snap', id === 'clearance');
+    if (id === 'clearance') requestAnimationFrame(watchClearanceStickyOffset);
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
     // Category banners are built once at load time via features.js's

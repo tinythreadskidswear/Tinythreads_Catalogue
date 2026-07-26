@@ -865,11 +865,8 @@
   background: linear-gradient(135deg, #fff8f2 0%, #ffe7d6 52%, #fff1f5 100%);
   border-bottom: 1px solid rgba(183, 28, 28, .1);
   padding: 1rem 1rem 1.45rem;
-}
-
-.clearance-hero .breadcrumb {
-  max-width: 1180px;
-  margin: 0 auto .9rem;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
 }
 
 .clearance-hero-inner {
@@ -907,9 +904,6 @@
 }
 
 .clearance-price-nav {
-  position: sticky;
-  top: var(--header-offset, 98px);
-  z-index: 30;
   display: flex;
   gap: 8px;
   overflow-x: auto;
@@ -938,8 +932,15 @@
 }
 
 html.tt-clearance-snap {
+  --clearance-sticky-top: 100px;
+  --clearance-sticky-height: 148px;
+  --clearance-content-offset: calc(var(--clearance-sticky-top) + var(--clearance-sticky-height));
   scroll-snap-type: y mandatory;
-  scroll-padding-top: 148px;
+  scroll-padding-top: var(--clearance-content-offset);
+}
+
+.clearance-subnav {
+  top: var(--clearance-sticky-top, 100px);
 }
 
 .clearance-section {
@@ -951,8 +952,7 @@ html.tt-clearance-snap {
 .clearance-price-block {
   scroll-snap-align: start;
   scroll-snap-stop: always;
-  scroll-margin-top: 148px;
-  min-height: calc(100svh - 148px);
+  min-height: calc(100svh - var(--clearance-content-offset, 248px));
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -1006,17 +1006,15 @@ html.tt-clearance-snap {
 }
 
 @media (min-width: 760px) {
-  html.tt-clearance-snap {
-    scroll-padding-top: 156px;
-  }
-
-  .clearance-price-block {
-    scroll-margin-top: 156px;
-    min-height: calc(100svh - 156px);
-  }
-
   .clearance-grid > .tt-product-card {
     flex-basis: 230px;
+  }
+}
+
+@media (max-width: 768px) {
+  html.tt-clearance-snap {
+    --clearance-sticky-top: 88px;
+    --clearance-sticky-height: 140px;
   }
 }
 
