@@ -485,6 +485,8 @@
         const cnt = document.getElementById('cnt-' + cat);
         if (cnt) { const n = allProducts.filter(p => p.category === cat).length; cnt.textContent = n + (n === 1 ? ' product' : ' products'); }
       });
+      buildFilterBar('clearance');
+      renderClearanceGrids();
     }
 
     // ── FILTER + SORT STATE ──
@@ -501,25 +503,40 @@
       slippers: '🥿 Slippers'
     };
 
+    function clearanceProducts() {
+      return allProducts.filter(function (product) {
+        return [99, 149, 199, 249, 299].indexOf(Number(product.price)) !== -1;
+      });
+    }
+
     function getState(cat) {
-      if (!categoryState[cat]) categoryState[cat] = { filter: 'all', subcategories: [], ages: [], priceMin: 100, priceMax: 3000, sort: 'default' };
+      if (!categoryState[cat]) {
+        categoryState[cat] = cat === 'clearance'
+          ? { filter: 'all', subcategories: [], ages: [], priceMin: 99, priceMax: 299, sort: 'default' }
+          : { filter: 'all', subcategories: [], ages: [], priceMin: 100, priceMax: 3000, sort: 'default' };
+      }
       return categoryState[cat];
     }
 
     function buildFilterBar(cat) {
       const scroll = document.getElementById('filter-scroll-' + cat);
       if (window.TTFilterTray) {
+        const trayProducts = cat === 'clearance'
+          ? clearanceProducts().map(function (product) { return Object.assign({}, product, { category: 'clearance' }); })
+          : allProducts;
         window.TTFilterTray.initCategory({
           cat: cat,
-          products: allProducts,
+          products: trayProducts,
           state: getState(cat),
+          priceMin: cat === 'clearance' ? 99 : undefined,
+          priceMax: cat === 'clearance' ? 299 : undefined,
           labels: SUBCAT_LABELS,
           onApply: applyFilterAndSort
         });
         return;
       }
       if (!scroll) return;
-      const prods = allProducts.filter(p => p.category === cat);
+      const prods = cat === 'clearance' ? clearanceProducts() : allProducts.filter(p => p.category === cat);
       const subs = [...new Set(prods.map(p => p.subcategory).filter(Boolean))];
 
       // Build All button + subcategory chips
@@ -586,29 +603,38 @@
 
     function applyFilterAndSort(cat) {
       const state = getState(cat);
-      let prods = allProducts.filter(p => p.category === cat);
+      let prods = cat === 'clearance' ? clearanceProducts() : allProducts.filter(p => p.category === cat);
       if (window.TTFilterTray) {
         prods = prods.filter(p => window.TTFilterTray.productMatches(p, state));
       } else if (state.filter !== 'all') {
         prods = prods.filter(p => p.subcategory === state.filter);
       }
-      switch (state.sort) {
-        case 'price-asc': prods = [...prods].sort((a, b) => a.price - b.price); break;
-        case 'price-desc': prods = [...prods].sort((a, b) => b.price - a.price); break;
-        case 'new': prods = [...prods].sort((a, b) => {
+      prods = sortProductList(prods, state.sort);
+      if (cat === 'clearance') {
+        renderClearanceGrids(prods);
+        return;
+      }
+      renderGrid(cat + '-grid', prods);
+    }
+
+    function sortProductList(products, sort) {
+      switch (sort) {
+        case 'price-asc': return [...products].sort((a, b) => a.price - b.price);
+        case 'price-desc': return [...products].sort((a, b) => b.price - a.price);
+        case 'new': return [...products].sort((a, b) => {
           const bd = Date.parse(b.created_at || '') || 0;
           const ad = Date.parse(a.created_at || '') || 0;
           if (bd !== ad) return bd - ad;
           return (b.badge === 'New' ? 1 : 0) - (a.badge === 'New' ? 1 : 0);
-        }); break;
-        case 'az': prods = [...prods].sort((a, b) => a.name.localeCompare(b.name)); break;
-        default: prods = [...prods].sort((a, b) => {
+        });
+        case 'az': return [...products].sort((a, b) => a.name.localeCompare(b.name));
+        default: return [...products].sort((a, b) => {
           const sa = a.sort_order == null ? Infinity : a.sort_order;
           const sb = b.sort_order == null ? Infinity : b.sort_order;
-          return sa - sb;
-        }); break;
+          if (sa !== sb) return sa - sb;
+          return String(a.name || '').localeCompare(String(b.name || ''));
+        });
       }
-      renderGrid(cat + '-grid', prods);
     }
 
     // Legacy stubs (no longer needed)
@@ -624,6 +650,35 @@
         return;
       }
       grid.innerHTML = '<div class="loading-grid" style="grid-column:1/-1;">Products are loading...</div>';
+    }
+
+    function renderClearanceGrids(productList) {
+      const prices = [99, 149, 199, 249, 299];
+      const source = Array.isArray(productList) ? productList : sortProductList(clearanceProducts(), getState('clearance').sort);
+      prices.forEach(function (price) {
+        const items = source.filter(function (product) { return Number(product.price) === price; });
+        const grid = document.getElementById('clearance-grid-' + price);
+        const count = document.getElementById('clearance-count-' + price);
+        if (count) count.textContent = items.length + ' item' + (items.length === 1 ? '' : 's');
+        if (!grid) return;
+        if (!items.length) {
+          grid.innerHTML = '<div class="loading-grid" style="grid-column:1/-1;">No clearance products at Rs ' + price + ' yet.</div>';
+          return;
+        }
+        if (window.TTProductCard && typeof window.TTProductCard.renderInto === 'function') {
+          window.TTProductCard.renderInto(grid, items, { context: 'clearance' });
+          return;
+        }
+        grid.innerHTML = '<div class="loading-grid" style="grid-column:1/-1;">Products are loading...</div>';
+      });
+    }
+
+    function ttClearanceScrollTo(price) {
+      showPage('clearance');
+      requestAnimationFrame(function () {
+        const target = document.getElementById('clearance-' + price);
+        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
     }
 
     const selectedSizes = {};
@@ -1060,7 +1115,7 @@
       home: '/', boys: '/boys', girls: '/girls', babies: '/babies',
       nightwear: '/nightwear', footwear: '/footwear', accessories: '/accessories',
       toys: '/toys', twinning: '/twinning', kidscare: '/kidscare',
-      school: '/school', learning: '/learning', celebration: '/celebration',
+      school: '/school', learning: '/learning', clearance: '/clearnace', celebration: '/celebration',
     };
     const CATEGORY_TITLES = {
       home: 'Tiny Threads Kidswear - Joyful Dailywear for Kids',
@@ -1075,6 +1130,7 @@
       kidscare: 'Kids Care · Tiny Threads Kidswear',
       school: 'School · Tiny Threads Kidswear',
       learning: 'Learning · Tiny Threads Kidswear',
+      clearance: 'Clearance · Tiny Threads Kidswear',
       celebration: 'Celebration · Tiny Threads Kidswear',
     };
     const CATEGORY_DESCRIPTIONS = {
@@ -1090,6 +1146,7 @@
       kidscare: 'Shop kids\u2019 care essentials at Tiny Threads Kidswear. Checkout via WhatsApp.',
       school: 'Shop school essentials for kids at Tiny Threads Kidswear. Checkout via WhatsApp.',
       learning: 'Shop learning products for kids at Tiny Threads Kidswear. Checkout via WhatsApp.',
+      clearance: 'Shop Tiny Threads Kidswear clearance styles by price. Browse Rs 99, Rs 149, Rs 199, Rs 249 and Rs 299 sections.',
       celebration: 'Shop celebration wear for kids at Tiny Threads Kidswear. Checkout via WhatsApp.',
     };
 
@@ -1103,6 +1160,7 @@
     const pageEl = document.getElementById('page-' + id);
     if (!pageEl) return;
     pageEl.classList.add('active');
+    document.documentElement.classList.toggle('tt-clearance-snap', id === 'clearance');
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
     // Category banners are built once at load time via features.js's
@@ -1164,7 +1222,7 @@
       const hash = window.location.hash.replace('#', '');
       const search = new URLSearchParams(window.location.search);
       const prodId = search.get('product');
-      const validPages = ['home', 'boys', 'girls', 'babies', 'nightwear', 'footwear', 'accessories', 'toys', 'twinning', 'kidscare', 'school', 'learning' , 'celebration'];
+      const validPages = ['home', 'boys', 'girls', 'babies', 'nightwear', 'footwear', 'accessories', 'toys', 'twinning', 'kidscare', 'school', 'learning', 'clearance', 'celebration'];
       // ── handle direct /products/:id URLs served by _worker.js ──
       const pathMatch = window.location.pathname.match(/^\/products\/([^/.]+?)(?:\.html)?$/);
       if (pathMatch) {
@@ -1178,6 +1236,14 @@
       // ── end ──
       // ── handle direct /boys, /girls, etc. URLs served by _worker.js ──
       const catSlug = window.location.pathname.replace(/^\/|\/$/g, '');
+      if (catSlug === 'clearnace' || catSlug === 'clearance') {
+        sessionStorage.setItem('tt_splash_seen', '1');
+        const splashEl = document.getElementById('splash-screen');
+        if (splashEl) { splashEl.style.display = 'none'; }
+        document.body.classList.remove('splash-active');
+        showPage('clearance');
+        return;
+      }
       if (catSlug && validPages.includes(catSlug)) {
         sessionStorage.setItem('tt_splash_seen', '1');
         const splashEl = document.getElementById('splash-screen');

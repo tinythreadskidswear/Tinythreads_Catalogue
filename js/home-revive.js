@@ -6,7 +6,10 @@
   let productRailChapterLock = false;
   let collectionCarouselTimer = null;
   let collectionCarouselResumeTimer = null;
-  let collectionCarouselVisible = false;
+  let collectionCarouselVisible = true;
+  let offersCarouselTimer = null;
+  let offersCarouselResumeTimer = null;
+  let offersCarouselVisible = true;
 
   const NEEDS = [
     { key: 'school_ready', title: 'School Ready', img: 'need-school-ready.png', fallback: p => p.category === 'school' },
@@ -261,13 +264,18 @@
     collectionCarouselTimer = null;
   }
 
-  function chapterTwoCarouselCanRun() {
-    const rail = document.querySelector('.tt-home-collections');
+  function stopOffersCarousel() {
+    if (offersCarouselTimer) window.clearInterval(offersCarouselTimer);
+    offersCarouselTimer = null;
+  }
+
+  function chapterTwoCarouselCanRun(selector, visible) {
+    const rail = document.querySelector(selector);
     const home = document.getElementById('page-home');
     const reducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     return Boolean(
       rail &&
-      collectionCarouselVisible &&
+      visible &&
       !reducedMotion &&
       document.visibilityState === 'visible' &&
       (!home || home.classList.contains('active')) &&
@@ -275,8 +283,8 @@
     );
   }
 
-  function advanceCollectionCarousel() {
-    const rail = document.querySelector('.tt-home-collections');
+  function advanceHorizontalCarousel(selector) {
+    const rail = document.querySelector(selector);
     if (!rail) return;
     const cards = Array.from(rail.querySelectorAll('.tt-image-card'));
     if (cards.length < 2) return;
@@ -297,11 +305,32 @@
     });
   }
 
+  function advanceCollectionCarousel() {
+    advanceHorizontalCarousel('.tt-home-collections');
+  }
+
+  function advanceOffersCarousel() {
+    advanceHorizontalCarousel('.tt-home-offers');
+  }
+
   function startCollectionCarousel() {
     stopCollectionCarousel();
-    if (!chapterTwoCarouselCanRun()) return;
+    if (!chapterTwoCarouselCanRun('.tt-home-collections', collectionCarouselVisible)) return;
     const delay = (window.tinythreadsConfig && window.tinythreadsConfig.autoPlayInterval) || 3000;
+    window.setTimeout(function () {
+      if (chapterTwoCarouselCanRun('.tt-home-collections', collectionCarouselVisible)) advanceCollectionCarousel();
+    }, 450);
     collectionCarouselTimer = window.setInterval(advanceCollectionCarousel, delay);
+  }
+
+  function startOffersCarousel() {
+    stopOffersCarousel();
+    if (!chapterTwoCarouselCanRun('.tt-home-offers', offersCarouselVisible)) return;
+    const delay = (window.tinythreadsConfig && window.tinythreadsConfig.autoPlayInterval) || 3000;
+    window.setTimeout(function () {
+      if (chapterTwoCarouselCanRun('.tt-home-offers', offersCarouselVisible)) advanceOffersCarousel();
+    }, 450);
+    offersCarouselTimer = window.setInterval(advanceOffersCarousel, delay);
   }
 
   function resumeCollectionCarouselSoon() {
@@ -309,35 +338,53 @@
     collectionCarouselResumeTimer = window.setTimeout(startCollectionCarousel, 1800);
   }
 
+  function resumeOffersCarouselSoon() {
+    if (offersCarouselResumeTimer) window.clearTimeout(offersCarouselResumeTimer);
+    offersCarouselResumeTimer = window.setTimeout(startOffersCarousel, 1800);
+  }
+
   function bindChapterTwoCarousel() {
-    const rail = document.querySelector('.tt-home-collections');
+    bindAutoRail('.tt-home-collections', function (visible) {
+      collectionCarouselVisible = visible;
+      if (collectionCarouselVisible) startCollectionCarousel();
+      else stopCollectionCarousel();
+    }, stopCollectionCarousel, resumeCollectionCarouselSoon);
+
+    bindAutoRail('.tt-home-offers', function (visible) {
+      offersCarouselVisible = visible;
+      if (offersCarouselVisible) startOffersCarousel();
+      else stopOffersCarousel();
+    }, stopOffersCarousel, resumeOffersCarouselSoon);
+  }
+
+  function bindAutoRail(selector, onVisibleChange, stop, resume) {
+    const rail = document.querySelector(selector);
     if (!rail || rail.dataset.autoplayBound === 'true') return;
     rail.dataset.autoplayBound = 'true';
 
     ['pointerdown', 'mouseenter', 'focusin'].forEach(function (eventName) {
-      rail.addEventListener(eventName, stopCollectionCarousel, { passive: true });
+      rail.addEventListener(eventName, stop, { passive: true });
     });
     ['pointerup', 'pointercancel', 'mouseleave', 'focusout'].forEach(function (eventName) {
-      rail.addEventListener(eventName, resumeCollectionCarouselSoon, { passive: true });
+      rail.addEventListener(eventName, resume, { passive: true });
     });
     rail.addEventListener('wheel', function () {
-      stopCollectionCarousel();
-      resumeCollectionCarouselSoon();
+      stop();
+      resume();
     }, { passive: true });
 
     if ('IntersectionObserver' in window) {
       const observer = new IntersectionObserver(function (entries) {
-        collectionCarouselVisible = entries.some(function (entry) {
+        const visible = entries.some(function (entry) {
           return entry.isIntersecting && entry.intersectionRatio >= .35;
         });
-        if (collectionCarouselVisible) startCollectionCarousel();
-        else stopCollectionCarousel();
+        onVisibleChange(visible);
       }, { threshold: [.35] });
       observer.observe(rail);
     } else {
-      collectionCarouselVisible = true;
-      startCollectionCarousel();
+      onVisibleChange(true);
     }
+    resume();
   }
 
   function syncHomeSnapMode(pageId) {
@@ -390,17 +437,28 @@
   window.addEventListener('tt:productsloaded', render);
   window.addEventListener('tt:pageshown', function (event) {
     syncHomeSnapMode(event.detail && event.detail.id);
-    if (event.detail && event.detail.id === 'home') startCollectionCarousel();
-    else stopCollectionCarousel();
+    if (event.detail && event.detail.id === 'home') {
+      startCollectionCarousel();
+      startOffersCarousel();
+    } else {
+      stopCollectionCarousel();
+      stopOffersCarousel();
+    }
   });
   window.addEventListener('resize', function () {
     updateNeedOverflow(document.getElementById('tt-need-track'));
     syncHomeSnapMode();
     startCollectionCarousel();
+    startOffersCarousel();
   });
   document.addEventListener('visibilitychange', function () {
-    if (document.visibilityState === 'visible') startCollectionCarousel();
-    else stopCollectionCarousel();
+    if (document.visibilityState === 'visible') {
+      startCollectionCarousel();
+      startOffersCarousel();
+    } else {
+      stopCollectionCarousel();
+      stopOffersCarousel();
+    }
   });
 
   window.ttOpenCollection = openCollection;

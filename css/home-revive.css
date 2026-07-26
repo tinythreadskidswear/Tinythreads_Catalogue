@@ -784,7 +784,8 @@
 }
 
 .tt-home-offers .tt-image-card {
-  width: clamp(220px, 72vw, 305px);
+  width: clamp(260px, 40vw, 430px);
+  min-width: clamp(260px, 40vw, 430px);
   aspect-ratio: 305 / 157;
 }
 
@@ -794,7 +795,8 @@
 }
 
 .tt-home-collections .tt-image-card {
-  width: clamp(210px, 70vw, 297px);
+  width: clamp(230px, 34vw, 360px);
+  min-width: clamp(230px, 34vw, 360px);
   aspect-ratio: 297 / 154;
 }
 
