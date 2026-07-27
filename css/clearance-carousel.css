@@ -1,0 +1,78 @@
+.clearance-section {
+  grid-template-columns: minmax(0, 1fr);
+  width: 100%;
+  min-width: 0;
+}
+
+.clearance-price-block {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.clearance-carousel {
+  display: flex;
+  align-items: stretch;
+  flex-wrap: nowrap;
+  gap: .9rem;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: .15rem .05rem .45rem;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: 1rem;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
+  overscroll-behavior-y: auto;
+  cursor: grab;
+  touch-action: pan-y pinch-zoom;
+  -webkit-overflow-scrolling: touch;
+}
+
+.clearance-carousel.is-dragging {
+  cursor: grabbing;
+  scroll-behavior: auto;
+  scroll-snap-type: none;
+  user-select: none;
+}
+
+.clearance-carousel::-webkit-scrollbar {
+  display: none;
+}
+
+.clearance-carousel > .tt-product-card {
+  flex: 0 0 min(76vw, 230px);
+  width: min(76vw, 230px);
+  min-width: min(76vw, 230px);
+  scroll-snap-align: start;
+}
+
+/* Clearance uses one static card image so the product rail, rather than a
+   nested image Swiper, owns horizontal touch gestures across the whole card. */
+.clearance-carousel .tt-pc-static {
+  touch-action: inherit;
+}
+
+.clearance-carousel img {
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+@media (max-width: 700px) {
+  .clearance-carousel {
+    gap: .75rem;
+    padding-bottom: .25rem;
+  }
+}
+
+@media (min-width: 760px) {
+  .clearance-carousel > .tt-product-card {
+    flex-basis: 230px;
+    width: 230px;
+    min-width: 230px;
+  }
+}

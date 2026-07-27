@@ -43,8 +43,10 @@
     });
   }
 
-  function imageSlides(product, name) {
-    return productImages(product).map(function (url) {
+  function imageSlides(product, name, limit) {
+    var images = productImages(product);
+    if (typeof limit === 'number') images = images.slice(0, limit);
+    return images.map(function (url) {
       var transformed = transformImage(url, 480);
       return '<div class="swiper-slide"><img src="' + escapeHtml(transformed) + '" data-optimized="' + escapeHtml(transformed) + '" data-fallback="' + escapeHtml(url) + '" alt="' + name + '" loading="lazy"></div>';
     }).join('');
@@ -104,14 +106,16 @@
 
   function renderCard(product, options) {
     var context = options && options.context ? String(options.context) : 'default';
+    var isClearance = context === 'clearance';
     var id = escapeHtml(String(product.id));
     var name = escapeHtml(product.name || 'Tinythreads style');
     var images = productImages(product);
     var badge = product.badge ? '<span class="tt-pc-badge">' + escapeHtml(product.badge) + '</span>' : '';
     var wished = isWishlisted(product.id);
     var media = images.length
-      ? '<div class="swiper tt-pc-swiper"><div class="swiper-wrapper">' + imageSlides(product, name) + '</div>'
-        + (images.length > 1 ? '<div class="swiper-pagination"></div>' : '') + '</div>'
+      ? '<div class="' + (isClearance ? 'tt-pc-swiper tt-pc-static' : 'swiper tt-pc-swiper') + '"><div class="swiper-wrapper">'
+        + imageSlides(product, name, isClearance ? 1 : undefined) + '</div>'
+        + (!isClearance && images.length > 1 ? '<div class="swiper-pagination"></div>' : '') + '</div>'
       : '';
 
     return '<article class="tt-product-card tt-product-card--' + escapeHtml(context) + '" data-tt-product-id="' + id + '">'

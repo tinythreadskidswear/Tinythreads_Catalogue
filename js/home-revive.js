@@ -35,14 +35,15 @@
     if (!found.length && key === 'fresh_picks') found = list.filter(p => p.featured);
     if (!found.length && key === 'clearance') found = list.filter(p => /clearance|sale|deal/i.test((p.badge || '') + ' ' + (p.name || '')));
     if (!found.length && key === 'daily_wear') found = list.filter(p => ['boys', 'girls', 'babies'].includes(p.category));
-    if (!found.length) found = list.slice(0, limit || 8);
-    return found.slice(0, limit || 8);
+    if (!found.length) found = list.slice();
+    return Number.isFinite(limit) ? found.slice(0, limit) : found;
   }
 
   function renderHomeProducts(grid, items) {
     if (!grid) return;
     if (window.TTProductCard && typeof window.TTProductCard.renderInto === 'function') {
       window.TTProductCard.renderInto(grid, items, { context: 'home' });
+      grid.scrollLeft = 0;
       return;
     }
     grid.innerHTML = '<div class="loading-grid">Products are loading...</div>';
@@ -63,7 +64,7 @@
     if (!track) return;
 
     track.innerHTML = NEEDS.map(need => {
-      const count = byCollection(need.key, 50, need.fallback).length;
+      const count = byCollection(need.key, null, need.fallback).length;
       if (!count) return '';
       const selected = activeCollectionKey === need.key;
       return '<button type="button" class="tt-need-card" data-collection="' + need.key + '" aria-pressed="' + selected + '" onclick="ttOpenCollection(\'' + need.key + '\', this)">'
@@ -142,9 +143,11 @@
     if (!section || !title || !sub || !grid) return;
 
     activeCollectionKey = key;
+    const need = NEEDS.find(item => item.key === key);
+    const matches = byCollection(key, null, need && need.fallback);
     title.textContent = collectionLabel(key);
-    sub.textContent = 'Curated Tinythreads styles matched to this need.';
-    renderHomeProducts(grid, byCollection(key, 10));
+    sub.textContent = matches.length + ' Tinythreads style' + (matches.length === 1 ? '' : 's') + ' matched to this need.';
+    renderHomeProducts(grid, matches);
     section.hidden = false;
     if (reset) reset.hidden = false;
     setNeedSelection(key, selectedCard);
@@ -159,7 +162,7 @@
     if (!q) return;
     const matches = products().filter(p => {
       return [p.name, p.description, p.category, p.subcategory, p.badge].join(' ').toLowerCase().includes(q);
-    }).slice(0, 10);
+    });
 
     const section = document.getElementById('tt-home-collection-results');
     const title = document.getElementById('tt-home-collection-title');
@@ -170,7 +173,9 @@
 
     activeCollectionKey = null;
     title.textContent = 'Search results';
-    sub.textContent = matches.length ? 'Showing matches for "' + q + '".' : 'No matching products yet. Try girls, boys, school or nightwear.';
+    sub.textContent = matches.length
+      ? 'Showing all ' + matches.length + ' match' + (matches.length === 1 ? '' : 'es') + ' for "' + q + '".'
+      : 'No matching products yet. Try girls, boys, school or nightwear.';
     if (matches.length) renderHomeProducts(grid, matches);
     else grid.innerHTML = '';
     section.hidden = false;

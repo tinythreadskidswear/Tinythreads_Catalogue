@@ -43,6 +43,11 @@
     els.sheet.classList.remove("tt-open");
   }
 
+  function isHomePageActive() {
+    const activePage = document.querySelector(".page.active");
+    return !activePage || activePage.id === "page-home";
+  }
+
   // ---------- Keep the partner cutout photo from clipping off the top ----------
   // Base numbers match the original fixed design: a 280px photo that rises
   // 210px above the sheet's top edge, with an 80px flow-spacer underneath
@@ -345,6 +350,9 @@
     cacheEls();
     els.closeBtn.addEventListener("click", closeSheet);
     els.backdrop.addEventListener("click", closeSheet);
+    window.addEventListener("tt:pageshown", (event) => {
+      if (!event.detail || event.detail.id !== "home") closeSheet();
+    });
 
     // Re-fit the partner photo if the viewport height changes while the
     // "found" sheet is open (orientation change, mobile address-bar show/hide)
@@ -372,7 +380,9 @@
       // No match yet — chip shows 🏪 icon; sheet auto-opens after brief delay
       renderChip(null);
       showEntry();
-      setTimeout(openSheet, 600);
+      setTimeout(() => {
+        if (isHomePageActive()) openSheet();
+      }, 600);
     }
   }
 
