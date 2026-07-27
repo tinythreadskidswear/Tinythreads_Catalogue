@@ -12,6 +12,7 @@
   let offersCarouselVisible = true;
 
   const NEEDS = [
+    { key: 'ethnic', title: 'Ethnic', img: 'need-ethnic.png', always: true, strict: true },
     { key: 'school_ready', title: 'School Ready', img: 'need-school-ready.png', fallback: p => p.category === 'school' },
     { key: 'monsoon_comfort', title: 'Monsoon Comfort', img: 'need-monsoon-comfort.png', fallback: p => /rain|winter|jacket|layer/i.test((p.subcategory || '') + ' ' + (p.name || '')) },
     { key: 'birthday_looks', title: 'Birthday Looks', img: 'need-birthday-looks.png', fallback: p => /party|festive|traditional|dress|frock/i.test((p.subcategory || '') + ' ' + (p.name || '')) },
@@ -25,16 +26,23 @@
   }
 
   function hasCollection(p, key) {
-    return Array.isArray(p.collections) && p.collections.includes(key);
+    const collections = Array.isArray(p.collections)
+      ? p.collections
+      : typeof p.collections === 'string'
+        ? [p.collections]
+        : [];
+    return collections.some(collection => String(collection).trim().toLowerCase() === key);
   }
 
   function byCollection(key, limit, fallback) {
     const list = products();
+    const need = NEEDS.find(item => item.key === key);
     let found = list.filter(p => hasCollection(p, key));
     if (!found.length && typeof fallback === 'function') found = list.filter(fallback);
     if (!found.length && key === 'fresh_picks') found = list.filter(p => p.featured);
     if (!found.length && key === 'clearance') found = list.filter(p => /clearance|sale|deal/i.test((p.badge || '') + ' ' + (p.name || '')));
     if (!found.length && key === 'daily_wear') found = list.filter(p => ['boys', 'girls', 'babies'].includes(p.category));
+    if (!found.length && need && need.strict) return [];
     if (!found.length) found = list.slice();
     return Number.isFinite(limit) ? found.slice(0, limit) : found;
   }
@@ -65,7 +73,7 @@
 
     track.innerHTML = NEEDS.map(need => {
       const count = byCollection(need.key, null, need.fallback).length;
-      if (!count) return '';
+      if (!count && !need.always) return '';
       const selected = activeCollectionKey === need.key;
       return '<button type="button" class="tt-need-card" data-collection="' + need.key + '" aria-pressed="' + selected + '" onclick="ttOpenCollection(\'' + need.key + '\', this)">'
         + '<img src="' + ASSET_BASE + need.img + '" alt="' + need.title + '" loading="lazy">'

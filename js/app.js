@@ -448,7 +448,14 @@
               price: parseFloat(r.price) || 0, badge: r.badge || '',
               fabric: r.fabric || '', featured: !!r.featured,
               category: r.category, subcategory: r.subcategory || '',
-              collections: Array.isArray(r.collections) ? r.collections : [],
+              // Supabase normally returns the collections column as an array.
+              // Also accept a scalar value so a collection entry of "ethnic"
+              // still maps to the matching Chapter One tile.
+              collections: Array.isArray(r.collections)
+                ? r.collections
+                : typeof r.collections === 'string' && r.collections.trim()
+                  ? [r.collections.trim()]
+                  : [],
               images: Array.isArray(r.images) ? r.images : [],
               sizes: Array.isArray(r.sizes) ? r.sizes : [],
               colors: Array.isArray(r.colors) ? r.colors : [],
