@@ -165,7 +165,7 @@ test.describe('revived home product card', () => {
 
   test('changes only the product carousel when a Shop by Need tile is selected', async ({ page }) => {
     const discovery = page.locator('#tt-home-discovery');
-    const tile = page.locator('#tt-need-track [data-collection="school_ready"]');
+    const tile = page.locator('#tt-need-track [data-collection="daily_wear"]');
 
     await discovery.scrollIntoViewIfNeeded();
     await page.waitForTimeout(250);
@@ -183,7 +183,16 @@ test.describe('revived home product card', () => {
 
     await tile.click();
     await expect(tile).toHaveAttribute('aria-pressed', 'true');
-    await expect(page.locator('#tt-home-collection-title')).toHaveText('School Ready');
+    await expect(page.locator('#tt-home-collection-title')).toHaveText('Daily Wear');
+    const expectedCount = await page.evaluate(() => {
+      const tagged = window.allProducts.filter(product =>
+        Array.isArray(product.collections) && product.collections.includes('daily_wear')
+      );
+      return tagged.length || window.allProducts.filter(product =>
+        ['boys', 'girls', 'babies'].includes(product.category)
+      ).length;
+    });
+    await expect(page.locator('#tt-home-collection-products > .tt-product-card')).toHaveCount(expectedCount);
     await expect(discovery).not.toHaveClass(/is-engaged/);
     await page.waitForTimeout(350);
 
@@ -209,7 +218,23 @@ test.describe('revived home product card', () => {
     const searchButton = page.locator('.tt-home-search button');
 
     await discovery.scrollIntoViewIfNeeded();
-    const query = await page.evaluate(() => window.allProducts[0].name.split(/\s+/)[0]);
+    const query = await page.evaluate(() => {
+      const counts = window.allProducts.reduce((result, product) => {
+        if (product.category) result[product.category] = (result[product.category] || 0) + 1;
+        return result;
+      }, {});
+      return Object.entries(counts).sort((first, second) => second[1] - first[1])[0][0];
+    });
+    const expectedCount = await page.evaluate(searchTerm => {
+      const normalized = searchTerm.toLowerCase();
+      return window.allProducts.filter(product =>
+        [product.name, product.description, product.category, product.subcategory, product.badge]
+          .join(' ')
+          .toLowerCase()
+          .includes(normalized)
+      ).length;
+    }, query);
+    expect(expectedCount).toBeGreaterThan(10);
     await searchInput.fill(query);
     await page.waitForTimeout(250);
 
@@ -226,6 +251,7 @@ test.describe('revived home product card', () => {
 
     await searchButton.click();
     await expect(page.locator('#tt-home-collection-title')).toHaveText('Search results');
+    await expect(page.locator('#tt-home-collection-products > .tt-product-card')).toHaveCount(expectedCount);
     await expect(discovery).not.toHaveClass(/is-engaged/);
     await page.waitForTimeout(350);
 

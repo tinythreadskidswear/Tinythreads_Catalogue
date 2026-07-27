@@ -661,12 +661,14 @@
         const count = document.getElementById('clearance-count-' + price);
         if (count) count.textContent = items.length + ' item' + (items.length === 1 ? '' : 's');
         if (!grid) return;
+        if (window.TTClearanceCarousel) window.TTClearanceCarousel.destroy(grid);
         if (!items.length) {
           grid.innerHTML = '<div class="loading-grid" style="grid-column:1/-1;">No clearance products at Rs ' + price + ' yet.</div>';
           return;
         }
         if (window.TTProductCard && typeof window.TTProductCard.renderInto === 'function') {
           window.TTProductCard.renderInto(grid, items, { context: 'clearance' });
+          if (window.TTClearanceCarousel) window.TTClearanceCarousel.refresh(grid);
           return;
         }
         grid.innerHTML = '<div class="loading-grid" style="grid-column:1/-1;">Products are loading...</div>';
