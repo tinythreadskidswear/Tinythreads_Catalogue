@@ -212,6 +212,33 @@ test.describe('revived home product card', () => {
     expect(Math.abs(after.cardWidth - before.cardWidth)).toBeLessThanOrEqual(1);
   });
 
+  test('shows Ethnic first and filters by the exact Supabase collection key', async ({ page }) => {
+    await page.evaluate(() => {
+      const source = window.allProducts[0];
+      window.allProducts.forEach(product => {
+        product.collections = (Array.isArray(product.collections) ? product.collections : [])
+          .filter(collection => collection !== 'ethnic');
+      });
+      window.allProducts.push({
+        ...source,
+        id: 'ethnic-collection-test',
+        name: 'Ethnic Twins Test Style',
+        collections: ['ethnic']
+      });
+      window.dispatchEvent(new CustomEvent('tt:productsloaded'));
+    });
+
+    const tiles = page.locator('#tt-need-track .tt-need-card');
+    const ethnicTile = tiles.first();
+    await expect(ethnicTile).toHaveAttribute('data-collection', 'ethnic');
+    await expect(ethnicTile.locator('img')).toHaveAttribute('src', /need-ethnic\.png$/);
+
+    await ethnicTile.click();
+    await expect(page.locator('#tt-home-collection-title')).toHaveText('Ethnic');
+    await expect(page.locator('#tt-home-collection-products > .tt-product-card')).toHaveCount(1);
+    await expect(page.locator('#tt-home-collection-products .tt-pc-title')).toHaveText('Ethnic Twins Test Style');
+  });
+
   test('changes only the product carousel when home search is submitted', async ({ page }) => {
     const discovery = page.locator('#tt-home-discovery');
     const searchInput = page.locator('#tt-home-search-input');
